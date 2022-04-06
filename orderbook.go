@@ -1,6 +1,7 @@
 package obm
 
 import (
+	"math"
 	"sync"
 	"time"
 
@@ -91,5 +92,15 @@ func (p *Orderbook) Update(asks, bids []Book) {
 func (p *Orderbook) Best() (ask, bid Book) {
 	aprice, asize := p.Asks.tree.Min()
 	bprice, bsize := p.Bids.tree.Max()
-	return Book{aprice.(float64), asize.(float64)}, Book{bprice.(float64), bsize.(float64)}
+
+	a0 := aprice.(float64)
+	a1 := asize.(float64)
+	b0 := bprice.(float64)
+	b1 := bsize.(float64)
+
+	if math.IsNaN(a0) || math.IsNaN(a1) || math.IsNaN(b0) || math.IsNaN(b1) {
+		return Book{}, Book{}
+	}
+
+	return Book{a0, a1}, Book{b0, b1}
 }
