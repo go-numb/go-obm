@@ -1,7 +1,6 @@
 package obm
 
 import (
-	"fmt"
 	"sort"
 	"sync"
 	"time"
@@ -115,7 +114,6 @@ func (p *Orderbook) Wall() (ask, bid Book) {
 			if ask.Size < val {
 				ask.Price = key
 				ask.Size = val
-				fmt.Println("ask", ask)
 			}
 		})
 	}()
@@ -136,7 +134,6 @@ func (p *Orderbook) Wall() (ask, bid Book) {
 				if bid.Size < v.(float64) {
 					bid.Price = prices[i].(float64)
 					bid.Size = v.(float64)
-					fmt.Println("bid", bid)
 				}
 			}
 		}
