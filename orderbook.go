@@ -104,11 +104,6 @@ func (p *Orderbook) Best() (ask, bid Book) {
 // Wall search Big board In the setting cap range
 // Search by Price near Mid
 func (p *Orderbook) Wall() (ask, bid Book) {
-	start := time.Now()
-	defer func() {
-		fmt.Printf("wall time: %f s\n", time.Since(start).Seconds())
-	}()
-
 	wg := sync.WaitGroup{}
 
 	// Ask is descending-order
