@@ -128,8 +128,11 @@ func (p *Orderbook) Wall() (ask, bid Book) {
 
 		prices := p.Bids.tree.Keys()
 		sort.Slice(prices, func(i, j int) bool {
-			if prices[i] == nil || prices[j] == nil {
-
+			if prices[i] == nil {
+				p.Bids.tree.Remove(prices[i])
+			}
+			if prices[j] == nil {
+				p.Bids.tree.Remove(prices[j])
 			}
 			return prices[i].(float64) > prices[j].(float64)
 		})
