@@ -9,9 +9,9 @@ import (
 
 func TestOrderbook(t *testing.T) {
 	o := New("BTC-PERP")
-	o.SetCap(77, 100)
+	o.SetCap(200, 200)
 
-	l := 1000
+	l := 2000
 	asks := make([]Book, l)
 	bids := make([]Book, l)
 
@@ -23,7 +23,7 @@ func TestOrderbook(t *testing.T) {
 			Price: r.Float64(),
 			Size:  r.NormFloat64() * 10,
 		}
-		time.Sleep(time.Millisecond)
+		time.Sleep(time.Nanosecond)
 	}
 
 	for i := range bids {
@@ -31,7 +31,7 @@ func TestOrderbook(t *testing.T) {
 			Price: r.Float64(),
 			Size:  r.NormFloat64() * 10,
 		}
-		time.Sleep(time.Millisecond)
+		time.Sleep(time.Nanosecond)
 	}
 
 	start := time.Now()
@@ -50,5 +50,7 @@ func TestOrderbook(t *testing.T) {
 	fmt.Println(o.Best())
 
 	fmt.Printf("ask: %d, bid: %d, %#v\n", len(o.Asks.Books), len(o.Bids.Books), o)
+
+	fmt.Println(o.Wall())
 
 }

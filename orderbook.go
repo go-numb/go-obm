@@ -1,6 +1,8 @@
 package obm
 
 import (
+	"fmt"
+	"sort"
 	"sync"
 	"time"
 
@@ -97,4 +99,55 @@ func (p *Orderbook) Best() (ask, bid Book) {
 	}
 
 	return Book{aprice.(float64), asize.(float64)}, Book{bprice.(float64), bsize.(float64)}
+}
+
+// Wall search Big board In the setting cap range
+// Search by Price near Mid
+func (p *Orderbook) Wall() (ask, bid Book) {
+	start := time.Now()
+	defer func() {
+		fmt.Printf("wall time: %f s\n", time.Since(start).Seconds())
+	}()
+
+	wg := sync.WaitGroup{}
+
+	// Ask is descending-order
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		p.Asks.Each(func(key float64, val float64) {
+			if ask.Size < val {
+				ask.Price = key
+				ask.Size = val
+				fmt.Println("ask", ask)
+			}
+		})
+	}()
+
+	// Bid is ascending-order
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		prices := p.Bids.tree.Keys()
+		sort.Slice(prices, func(i, j int) bool {
+			return prices[i].(float64) > prices[j].(float64)
+		})
+
+		for i := 0; i < len(prices); i++ {
+			if v, isThere := p.Bids.tree.Get(prices[i]); isThere {
+
+				if bid.Size < v.(float64) {
+					bid.Price = prices[i].(float64)
+					bid.Size = v.(float64)
+					fmt.Println("bid", bid)
+				}
+			}
+		}
+	}()
+
+	wg.Wait()
+
+	return
 }
