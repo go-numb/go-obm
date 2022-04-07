@@ -103,6 +103,9 @@ func (p *Orderbook) Best() (ask, bid Book) {
 // Wall search Big board In the setting cap range
 // Search by Price near Mid
 func (p *Orderbook) Wall() (ask, bid Book) {
+	p.Lock()
+	defer p.Unlock()
+
 	wg := sync.WaitGroup{}
 
 	// Ask is descending-order
@@ -125,6 +128,9 @@ func (p *Orderbook) Wall() (ask, bid Book) {
 
 		prices := p.Bids.tree.Keys()
 		sort.Slice(prices, func(i, j int) bool {
+			if prices[i] == nil || prices[j] == nil {
+
+			}
 			return prices[i].(float64) > prices[j].(float64)
 		})
 
