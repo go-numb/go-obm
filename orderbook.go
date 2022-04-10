@@ -47,9 +47,13 @@ func New(symbol string) *Orderbook {
 }
 
 // SetCap is Determine the upper and lower limits of length stored in Map
-func (p *Orderbook) SetCap(bidcap, askcap int) {
+func (p *Orderbook) SetCap(askcap, bidcap int) {
 	p.Bids.cap = bidcap
 	p.Asks.cap = askcap
+}
+
+func (p *Orderbook) GetCap() (askcap, bidcap int) {
+	return p.Asks.cap, p.Bids.cap
 }
 
 func (p *Orderbook) Update(asks, bids []Book) {
@@ -130,9 +134,11 @@ func (p *Orderbook) Wall() (ask, bid Book) {
 		sort.Slice(prices, func(i, j int) bool {
 			if prices[i] == nil {
 				p.Bids.tree.Remove(prices[i])
+				return false
 			}
 			if prices[j] == nil {
 				p.Bids.tree.Remove(prices[j])
+				return false
 			}
 			return prices[i].(float64) > prices[j].(float64)
 		})
