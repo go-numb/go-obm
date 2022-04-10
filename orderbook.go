@@ -62,7 +62,7 @@ func (p *Orderbook) GetMin() (askmin, bidmin any) {
 	return pa, pb
 }
 
-func (p *Orderbook) GetMax() (askmin, bidmin any) {
+func (p *Orderbook) GetMax() (askmax, bidmax any) {
 	pa, _ := p.Asks.tree.Max()
 	pb, _ := p.Bids.tree.Max()
 	return pa, pb
