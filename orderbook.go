@@ -56,6 +56,18 @@ func (p *Orderbook) GetCap() (askcap, bidcap int) {
 	return p.Asks.cap, p.Bids.cap
 }
 
+func (p *Orderbook) GetMin() (askmin, bidmin any) {
+	pa, _ := p.Asks.tree.Min()
+	pb, _ := p.Bids.tree.Min()
+	return pa, pb
+}
+
+func (p *Orderbook) GetMax() (askmin, bidmin any) {
+	pa, _ := p.Asks.tree.Max()
+	pb, _ := p.Bids.tree.Max()
+	return pa, pb
+}
+
 func (p *Orderbook) Update(asks, bids []Book) {
 	p.Lock()
 	defer p.Unlock()
