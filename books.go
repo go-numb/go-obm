@@ -15,6 +15,18 @@ type Books struct {
 	Books   []Book
 }
 
+func (p *Books) Len() int {
+	return len(p.Books)
+}
+
+func (p *Books) Less(i, j int) bool {
+	return p.Books[i].Price > p.Books[j].Price
+}
+
+func (p *Books) Swap(i, j int) {
+	p.Books[i], p.Books[j] = p.Books[j], p.Books[i]
+}
+
 type Book struct {
 	Price float64
 	Size  float64
@@ -35,7 +47,7 @@ func (p *Books) String() string {
 func (p *Books) Get(depth int) *Books {
 	l := p.tree.Size()
 
-	if depth < 0 {
+	if depth < 10 {
 		depth = 10
 	}
 	if depth > l {
