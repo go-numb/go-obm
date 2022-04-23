@@ -91,6 +91,22 @@ func main() {
 // exec time: 0.009937 s
 // PASS
 
+	// limit order placement ratio of price range 
+	r := 0.01
+	lob := o.LOB(r)
+	for i := 0; i < len(lob.Bids); i++ {
+		fmt.Printf("%.0f - %f - %f - %f%%\n", lob.Bids[i].Price, lob.Bids[i].Size, lob.Bids[i].AccSize, lob.Bids[i].AccRatio*100)
+	}
+
+	// bid[996] - 5233998.000000 - 0.050000
+	
+	// price, size, accumulation of bids[A], ratio:[A]/accumulation of all
+	// 5234465 - 0.010000 - 0.010000 - 0.031682%
+	// 5234468 - 0.012767 - 0.022767 - 0.072130%
+	// 5234522 - 0.012779 - 0.035546 - 0.112616%
+	// 5234530 - 0.010000 - 0.045546 - 0.144298%
+	// 5234539 - 0.015000 - 0.060546 - 0.191820%
+
 }
 ```
 
