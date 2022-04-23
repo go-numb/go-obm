@@ -1,4 +1,4 @@
-package obm_test
+package obm
 
 import (
 	"fmt"
@@ -6,12 +6,10 @@ import (
 	"sort"
 	"testing"
 	"time"
-
-	"github.com/go-numb/go-obm"
 )
 
 func TestSort(t *testing.T) {
-	o := obm.New("test")
+	o := New("test")
 	o.SetCap(100, 100)
 
 	count := 100
@@ -20,11 +18,11 @@ func TestSort(t *testing.T) {
 	r := rand.New(s)
 
 	for i := 0; i < count; i++ {
-		o.Asks.Put(obm.Book{
+		o.Asks.Put(Book{
 			Price: r.NormFloat64() * 200,
 			Size:  r.NormFloat64(),
 		})
-		o.Bids.Put(obm.Book{
+		o.Bids.Put(Book{
 			Price: r.NormFloat64() * 100,
 			Size:  r.NormFloat64(),
 		})
@@ -33,7 +31,10 @@ func TestSort(t *testing.T) {
 	// depth default 10
 	books := o.Asks.Get(2)
 	fmt.Println(books)
-
+	fmt.Println("")
 	sort.Sort(sort.Reverse(books))
+	fmt.Println(books)
+
+	sort.Sort(books)
 	fmt.Println(books)
 }

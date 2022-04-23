@@ -2,7 +2,6 @@ package obm
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 
 	"github.com/emirpasic/gods/maps/treemap"
@@ -43,6 +42,10 @@ func (p *Books) String() string {
 	return strings.Join(s, "\n")
 }
 
+func (p *Books) Size() int {
+	return p.tree.Size()
+}
+
 // Get depth default:10
 func (p *Books) Get(depth int) *Books {
 	l := p.tree.Size()
@@ -56,10 +59,8 @@ func (p *Books) Get(depth int) *Books {
 
 	b := make([]Book, depth)
 
+	// sorted
 	keys := p.tree.Keys()
-	sort.Slice(keys, func(i, j int) bool {
-		return keys[i].(float64) > keys[j].(float64)
-	})
 
 	for i := 0; i < depth; i++ {
 		if value, isThere := p.tree.Get(keys[i]); isThere {
@@ -81,6 +82,9 @@ func (p *Books) Put(book Book) {
 		return
 	}
 
+	// インプット情報はすべて入力保存
+	//
+
 	// If map size is the upper limit, delete data from the upper or lower limits.
 	if p.tree.Size() >= p.cap {
 		switch p.remover {
@@ -97,9 +101,10 @@ func (p *Books) Put(book Book) {
 				return
 			}
 			p.tree.Remove(found)
-		}
 
+		}
 	}
+
 	p.tree.Put(book.Price, book.Size)
 }
 
@@ -107,4 +112,21 @@ func (p *Books) Each(fn func(key, val float64)) {
 	p.tree.Each(func(key, val any) {
 		fn(key.(float64), val.(float64))
 	})
+}
+
+func (p *Books) _all() []Book {
+	var books []Book
+
+	keys := p.tree.Keys()
+
+	for i := range keys {
+		if value, isThere := p.tree.Get(keys[i]); isThere {
+			books = append(books, Book{
+				Price: keys[i].(float64),
+				Size:  value.(float64),
+			})
+		}
+	}
+
+	return books
 }

@@ -28,16 +28,16 @@ type Orderbook struct {
 func New(symbol string) *Orderbook {
 	return &Orderbook{
 		Symbol: symbol,
-		Bids: &Books{
+		Asks: &Books{
 			cap: 0,
-			// descending-order
+			// ascending order
 			remover: MAX,
 			tree:    treemap.NewWith(utils.Float64Comparator),
 			Books:   []Book{},
 		},
-		Asks: &Books{
+		Bids: &Books{
 			cap: 0,
-			// ascending order
+			// descending-order
 			remover: MIN,
 			tree:    treemap.NewWith(utils.Float64Comparator),
 			Books:   []Book{},
@@ -102,7 +102,6 @@ func (p *Orderbook) Update(asks, bids []Book) {
 	wg.Wait()
 
 	p.UpdatedAt = time.Now()
-
 }
 
 func (p *Orderbook) Best() (ask, bid Book) {
