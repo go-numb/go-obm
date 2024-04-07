@@ -9,8 +9,7 @@ import (
 )
 
 func TestSort(t *testing.T) {
-	o := New("test")
-	o.SetCap(100, 100)
+	o := New("test").SetCap(100, 100)
 
 	count := 100
 

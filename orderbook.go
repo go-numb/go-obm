@@ -25,18 +25,20 @@ type Orderbook struct {
 	UpdatedAt time.Time
 }
 
+// New is Create a new Orderbook
+// default cap is 5
 func New(symbol string) *Orderbook {
 	return &Orderbook{
 		Symbol: symbol,
 		Asks: &Books{
-			cap: 0,
+			cap: 5,
 			// ascending order
 			remover: MAX,
 			tree:    treemap.NewWith(utils.Float64Comparator),
 			Books:   []Book{},
 		},
 		Bids: &Books{
-			cap: 0,
+			cap: 5,
 			// descending-order
 			remover: MIN,
 			tree:    treemap.NewWith(utils.Float64Comparator),
