@@ -47,9 +47,11 @@ func New(symbol string) *Orderbook {
 }
 
 // SetCap is Determine the upper and lower limits of length stored in Map
-func (p *Orderbook) SetCap(askcap, bidcap int) {
+func (p *Orderbook) SetCap(askcap, bidcap int) *Orderbook {
 	p.Bids.cap = bidcap
 	p.Asks.cap = askcap
+
+	return p
 }
 
 func (p *Orderbook) GetCap() (askcap, bidcap int) {
