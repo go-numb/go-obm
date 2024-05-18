@@ -8,6 +8,13 @@ import (
 )
 
 func TestOrderbook(t *testing.T) {
+	now := time.Now()
+	defer func() {
+		// exec time: 0.025748 s
+		// exec time: 57.571335 s
+		fmt.Printf("exec time: %f s\n", time.Since(now).Seconds())
+	}()
+
 	o := New("BTC-PERP")
 	o.SetCap(200, 200)
 

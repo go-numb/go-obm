@@ -3,10 +3,11 @@ package obm
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"sort"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -25,7 +26,7 @@ func TestLOB(t *testing.T) {
 	assert.NoError(t, err)
 	defer res.Body.Close()
 
-	b, err := ioutil.ReadAll(res.Body)
+	b, err := io.ReadAll(res.Body)
 	assert.NoError(t, err)
 	temp := new(Temp)
 	err = json.Unmarshal(b, temp)
@@ -94,6 +95,12 @@ func TestLOB(t *testing.T) {
 }
 
 func TestAll(t *testing.T) {
+	now := time.Now()
+	defer func() {
+		// exec time: 0.197374 s
+		fmt.Printf("exec time: %f s\n", time.Since(now).Seconds())
+	}()
+
 	o := New("test")
 
 	url := "https://api.bitflyer.com/v1/getboard?product_code=FX_BTC_JPY"
@@ -101,7 +108,7 @@ func TestAll(t *testing.T) {
 	assert.NoError(t, err)
 	defer res.Body.Close()
 
-	b, err := ioutil.ReadAll(res.Body)
+	b, err := io.ReadAll(res.Body)
 	assert.NoError(t, err)
 	temp := new(Temp)
 	err = json.Unmarshal(b, temp)

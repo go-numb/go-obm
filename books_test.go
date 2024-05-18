@@ -9,9 +9,15 @@ import (
 )
 
 func TestSort(t *testing.T) {
-	o := New("test").SetCap(100, 100)
+	now := time.Now()
+	defer func() {
+		// exec time: 0.269598 s
+		fmt.Printf("exec time: %f s\n", time.Since(now).Seconds())
+	}()
 
-	count := 100
+	o := New("test").SetCap(100000, 100000)
+
+	count := 100000
 
 	s := rand.NewSource(time.Now().Unix())
 	r := rand.New(s)
