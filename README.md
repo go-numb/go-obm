@@ -1,10 +1,14 @@
 # Orderbook manager with Golang
-go-obm is orderbook manager. set, update, sort, get best price and more.
+go-obm is orderbook manager for float64. set, update, sort, get best price and more.  
+go-obm/v2 supported decimal, key is string strict price.
 
 ## Installation
 
 ```
 $ go get -u github.com/go-numb/go-obm
+
+# v2 decimal
+$ go get -u github.com/go-numb/go-obm/v2
 ```
 
 ## Usage
@@ -18,77 +22,86 @@ import (
 )
 
 func main() {
-    // Setup
-	o := New("BTC-PERP")
-	o.SetCap(20, 20)
+	now := time.Now()
+	defer func() {
+	// # reference
+	// ## v2 decimal exec time: 1.618996 s
+	// ## v1 float64 exec time: 0.302507 s
+		fmt.Printf("exec time: %f s\n", time.Since(now).Seconds())
+	}()
 
-    // input(server response...)
-    // dummy data
-	l := 10
-	asks := make([]Book, l)
-	bids := make([]Book, l)
+	o := obm.New("test").SetCap(100000, 100000)
 
-	s := rand.NewSource(time.Now().UnixNano())
+	count := 100000
+
+	s := rand.NewSource(time.Now().Unix())
 	r := rand.New(s)
 
-	for i := range asks {
-		asks[i] = Book{
-			Price: r.Float64(),
-			Size:  r.NormFloat64() * 10,
-		}
-		time.Sleep(time.Millisecond)
+	for i := 0; i < count; i++ {
+		o.Asks.Put(obm.Book{
+			Price: decimal.NewFromFloat(r.NormFloat64() * 200),
+			Size:  decimal.NewFromFloat(r.NormFloat64()),
+		})
+		o.Bids.Put(obm.Book{
+			Price: decimal.NewFromFloat(r.NormFloat64() * 100),
+			Size:  decimal.NewFromFloat(r.NormFloat64()),
+		})
 	}
 
-	for i := range bids {
-		bids[i] = Book{
-			Price: r.Float64(),
-			Size:  r.NormFloat64() * 10,
-		}
-		time.Sleep(time.Millisecond)
-	}
+	// depth default 10
+	books := o.Asks.Get(2)
+	fmt.Println(books)
+	fmt.Println("")
+	sort.Sort(sort.Reverse(books))
+	fmt.Println("reverse sort")
+	fmt.Println(books)
 
-	o.Update(asks, bids)
-
-
-    // use struct
-	fmt.Println(o.Asks.Get(10), "\n", o.Bids.Get(10))
-
-	fmt.Println(o.Best())
-
-	fmt.Printf("ask: %d, bid: %d, %#v\n", len(o.Asks.Books), len(o.Bids.Books), o)
-
+	fmt.Println("sort")
+	sort.Sort(books)
+	fmt.Println(books)
+}
 // Print out
+// 0 - -0.001213774853359162:-0.9522491064087244
+// 1 - -0.00849450337623292:0.5419339371697502
+// 2 - -0.012667106317365562:-0.273163161491901
+// 3 - -0.024032114560307294:0.12993832989793802
+// 4 - -0.02826975357672623:1.1198441111617725
+// 5 - -0.035862938872954775:-0.6413617919818513
+// 6 - -0.04878297355579431:-0.04172143152529045
+// 7 - -0.04891801841933052:0.5753643028690486
+// 8 - -0.05535350612112522:0.23952017070860265
+// 9 - -0.05663744202366594:1.511194970209686
+// reverse sort
+// 0 - -0.05663744202366594:1.511194970209686
+// 1 - -0.05535350612112522:0.23952017070860265
+// 2 - -0.04891801841933052:0.5753643028690486
+// 3 - -0.04878297355579431:-0.04172143152529045
+// 4 - -0.035862938872954775:-0.6413617919818513
+// 5 - -0.02826975357672623:1.1198441111617725
+// 6 - -0.024032114560307294:0.12993832989793802
+// 7 - -0.012667106317365562:-0.273163161491901
+// 8 - -0.00849450337623292:0.5419339371697502
+// 9 - -0.001213774853359162:-0.9522491064087244
+// sort
+// 0 - -0.001213774853359162:-0.9522491064087244
+// 1 - -0.00849450337623292:0.5419339371697502
+// 2 - -0.012667106317365562:-0.273163161491901
+// 3 - -0.024032114560307294:0.12993832989793802
+// 4 - -0.02826975357672623:1.1198441111617725
+// 5 - -0.035862938872954775:-0.6413617919818513
+// 6 - -0.04878297355579431:-0.04172143152529045
+// 7 - -0.04891801841933052:0.5753643028690486
+// 8 - -0.05535350612112522:0.23952017070860265
+// 9 - -0.05663744202366594:1.511194970209686
+// ## v2 decimal
+// exec time: 1.618996 s
 
-// updated time: 0.000000 s
-
-// asks------------------------
-// 0 - 0.999126:12.623239
-// 1 - 0.998673:11.969490
-// 2 - 0.995374:12.411968
-// 3 - 0.993730:19.209979
-// 4 - 0.993432:1.188730
-// 5 - 0.993338:10.510313
-// 6 - 0.993020:17.003518
-// 7 - 0.988681:10.699286
-// 8 - 0.986657:6.555007
-// 9 - 0.983770:17.040381 
-// bids------------------------
-// 0 - 0.158852:2.346508
-// 1 - 0.157248:4.807470
-// 2 - 0.154350:7.245589
-// 3 - 0.150005:2.467844
-// 4 - 0.148196:1.627250
-// 5 - 0.146792:13.557464
-// 6 - 0.144692:4.510992
-// 7 - 0.134729:2.586043
-// 8 - 0.133824:2.608753
-// 9 - 0.132424:3.714124
-
-// get time: 0.000000 s
-
-// bestask{0.765535581376781 8.375973510078225}, bestbid{0.15885186778959806 2.346508140219099}
-// ask: 10, bid: 10, &obm.Orderbook{Mutex:sync.Mutex{state:0, sema:0x0}, Symbol:"BTC-PERP", Bids:(*obm.Books)(0xc000074750), Asks:(*obm.Books)(0xc000074780), UpdatedAt:time.Date(2022, time.April, 5, 20, 15, 59, 532576600, time.Local)}
-// exec time: 0.009937 s
+// ## v1 float64
+// ...
+// 7 - -822.442555:-0.193592
+// 8 - -824.809016:-1.782220
+// 9 - -833.094959:0.170305
+// exec time: 0.302507 s
 // PASS
 
 	// limit order placement ratio of price range 
