@@ -147,3 +147,64 @@ func (p *Books) getBookValues(key any) Book {
 		Size:  size,
 	}
 }
+
+// Converter is a function that converts the price and size of the book.
+func Converter(price, size any) Book {
+	switch v := price.(type) {
+	case int:
+		return converterI(v, size.(int))
+	case float32:
+		return converterF32(v, size.(float32))
+	case float64:
+		return converterF(v, size.(float64))
+	case string:
+		return converterS(v, size.(string))
+
+	case decimal.Decimal:
+		if s, ok := size.(decimal.Decimal); ok {
+			return Book{
+				Price: v,
+				Size:  s,
+			}
+		}
+	}
+
+	return Book{}
+}
+
+func converterI(price, size int) Book {
+	return Book{
+		Price: decimal.NewFromInt(int64(price)),
+		Size:  decimal.NewFromInt(int64(size)),
+	}
+}
+
+func converterF32(price, size float32) Book {
+	return Book{
+		Price: decimal.NewFromFloat32(price),
+		Size:  decimal.NewFromFloat32(size),
+	}
+}
+
+func converterF(price, size float64) Book {
+	return Book{
+		Price: decimal.NewFromFloat(price),
+		Size:  decimal.NewFromFloat(size),
+	}
+}
+
+func converterS(price, size string) Book {
+	p, err := decimal.NewFromString(price)
+	if err != nil {
+		p = decimal.Zero
+	}
+	s, err := decimal.NewFromString(size)
+	if err != nil {
+		s = decimal.Zero
+	}
+
+	return Book{
+		Price: p,
+		Size:  s,
+	}
+}
