@@ -64,21 +64,8 @@ func (p *Books) Get(depth int) *Books {
 	keys := p.tree.Keys()
 
 	for i := 0; i < depth; i++ {
-		if value, isThere := p.tree.Get(keys[i]); isThere {
-			price, err := decimal.NewFromString(keys[i].(string))
-			if err != nil {
-				price = decimal.NewFromInt(0)
-			}
-			size, err := decimal.NewFromString(value.(string))
-			if err != nil {
-				size = decimal.NewFromInt(0)
-			}
+		b[i] = p.getBookValues(keys[i])
 
-			b[i] = Book{
-				Price: price,
-				Size:  size,
-			}
-		}
 	}
 
 	p.Books = b
@@ -138,22 +125,25 @@ func (p *Books) _all() []Book {
 	keys := p.tree.Keys()
 
 	for i := range keys {
-		if value, isThere := p.tree.Get(keys[i]); isThere {
-			price, err := decimal.NewFromString(keys[i].(string))
-			if err != nil {
-				price = decimal.NewFromInt(0)
-			}
-			size, err := decimal.NewFromString(value.(string))
-			if err != nil {
-				size = decimal.NewFromInt(0)
-			}
-
-			books = append(books, Book{
-				Price: price,
-				Size:  size,
-			})
-		}
+		books = append(books, p.getBookValues(keys[i]))
 	}
 
 	return books
+}
+
+func (p *Books) getBookValues(key any) Book {
+	s := key.(string)
+	price, err := decimal.NewFromString(s)
+	if err != nil {
+		price = decimal.Zero
+	}
+	val, _ := p.tree.Get(s)
+	size, err := decimal.NewFromString(val.(string))
+	if err != nil {
+		size = decimal.Zero
+	}
+	return Book{
+		Price: price,
+		Size:  size,
+	}
 }

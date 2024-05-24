@@ -1,7 +1,6 @@
 package obm
 
 import (
-	"fmt"
 	"sort"
 	"sync"
 	"time"
@@ -119,25 +118,10 @@ func (p *Orderbook) Best() (ask, bid Book) {
 	}
 
 	// Convert aprice and bprice from string to decimal.Decimal
-	askPrice, err := decimal.NewFromString(aprice.(string))
-	if err != nil {
-		return Book{}, Book{}
-	}
-	askSize, err := decimal.NewFromString(asize.(string))
-	if err != nil {
-		return Book{}, Book{}
-	}
+	a := getBookValues(aprice, asize)
+	b := getBookValues(bprice, bsize)
 
-	bidPrice, err := decimal.NewFromString(bprice.(string))
-	if err != nil {
-		return Book{}, Book{}
-	}
-	bidSize, err := decimal.NewFromString(bsize.(string))
-	if err != nil {
-		return Book{}, Book{}
-	}
-
-	return Book{Price: askPrice, Size: askSize}, Book{Price: bidPrice, Size: bidSize}
+	return a, b
 }
 
 // Wall search Big board In the setting cap range
@@ -154,18 +138,11 @@ func (p *Orderbook) Wall() (ask, bid Book) {
 		defer wg.Done()
 
 		p.Asks.Each(func(key, val string) {
-			price, err := decimal.NewFromString(key)
-			if err != nil {
-				fmt.Println(err)
-			}
-			size, err := decimal.NewFromString(val)
-			if err != nil {
-				fmt.Println(err)
-			}
+			b := getBookValues(key, val)
 
-			if ask.Size.LessThan(size) {
-				ask.Price = price
-				ask.Size = size
+			if ask.Size.LessThan(b.Size) {
+				ask.Price = b.Price
+				ask.Size = b.Size
 			}
 		})
 	}()
@@ -202,18 +179,11 @@ func (p *Orderbook) Wall() (ask, bid Book) {
 
 		for i := 0; i < len(prices); i++ {
 			if v, isThere := p.Bids.tree.Get(prices[i]); isThere {
-				price, err := decimal.NewFromString(prices[i].(string))
-				if err != nil {
-					price = decimal.NewFromInt(0)
-				}
-				size, err := decimal.NewFromString(v.(string))
-				if err != nil {
-					size = decimal.NewFromInt(0)
-				}
+				b := getBookValues(prices[i], v)
 
-				if bid.Size.LessThan(size) {
-					bid.Price = price
-					bid.Size = size
+				if bid.Size.LessThan(b.Size) {
+					bid.Price = b.Price
+					bid.Size = b.Size
 				}
 			}
 		}
@@ -222,4 +192,20 @@ func (p *Orderbook) Wall() (ask, bid Book) {
 	wg.Wait()
 
 	return
+}
+
+func getBookValues(key any, val any) Book {
+	s := key.(string)
+	price, err := decimal.NewFromString(s)
+	if err != nil {
+		price = decimal.Zero
+	}
+	size, err := decimal.NewFromString(val.(string))
+	if err != nil {
+		size = decimal.Zero
+	}
+	return Book{
+		Price: price,
+		Size:  size,
+	}
 }
