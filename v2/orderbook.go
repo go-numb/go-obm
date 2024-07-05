@@ -32,17 +32,19 @@ func New(symbol string) *Orderbook {
 	return &Orderbook{
 		Symbol: symbol,
 		Asks: &Books{
-			cap: 5,
+			isBid: false,
+			cap:   5,
 			// ascending order
 			remover: MAX,
-			tree:    treemap.NewWith(utils.StringComparator),
+			tree:    treemap.NewWith(utils.Float64Comparator),
 			Books:   []Book{},
 		},
 		Bids: &Books{
-			cap: 5,
+			isBid: true,
+			cap:   5,
 			// descending-order
 			remover: MIN,
-			tree:    treemap.NewWith(utils.StringComparator),
+			tree:    treemap.NewWith(utils.Float64Comparator),
 			Books:   []Book{},
 		},
 		UpdatedAt: time.Now(),
@@ -61,16 +63,16 @@ func (p *Orderbook) GetCap() (askcap, bidcap int) {
 	return p.Asks.cap, p.Bids.cap
 }
 
-func (p *Orderbook) GetMin() (askmin, bidmin any) {
-	pa, _ := p.Asks.tree.Min()
-	pb, _ := p.Bids.tree.Min()
-	return pa, pb
+func (p *Orderbook) GetMin() (askmin, bidmin Book) {
+	pa, sa := p.Asks.tree.Min()
+	pb, sb := p.Bids.tree.Min()
+	return Converter(pa, sa), Converter(pb, sb)
 }
 
-func (p *Orderbook) GetMax() (askmax, bidmax any) {
-	pa, _ := p.Asks.tree.Max()
-	pb, _ := p.Bids.tree.Max()
-	return pa, pb
+func (p *Orderbook) GetMax() (askmax, bidmax Book) {
+	pa, sa := p.Asks.tree.Max()
+	pb, sb := p.Bids.tree.Max()
+	return Converter(pa, sa), Converter(pb, sb)
 }
 
 func (p *Orderbook) Update(asks, bids []Book) {
@@ -85,7 +87,7 @@ func (p *Orderbook) Update(asks, bids []Book) {
 		defer wg.Done()
 		for i := range asks {
 			if asks[i].Size.LessThanOrEqual(decimal.Zero) {
-				p.Asks.tree.Remove(asks[i].Price.String())
+				p.Asks.tree.Remove(asks[i].Price.InexactFloat64())
 			} else {
 				p.Asks.Put(asks[i])
 			}
@@ -97,7 +99,7 @@ func (p *Orderbook) Update(asks, bids []Book) {
 		defer wg.Done()
 		for i := range bids {
 			if bids[i].Size.LessThanOrEqual(decimal.Zero) {
-				p.Bids.tree.Remove(bids[i].Price.String())
+				p.Bids.tree.Remove(bids[i].Price.InexactFloat64())
 			} else {
 				p.Bids.Put(bids[i])
 			}
@@ -118,8 +120,8 @@ func (p *Orderbook) Best() (ask, bid Book) {
 	}
 
 	// Convert aprice and bprice from string to decimal.Decimal
-	a := getBookValues(aprice, asize)
-	b := getBookValues(bprice, bsize)
+	a := Converter(aprice, asize)
+	b := Converter(bprice, bsize)
 
 	return a, b
 }
@@ -137,8 +139,8 @@ func (p *Orderbook) Wall() (ask, bid Book) {
 	go func() {
 		defer wg.Done()
 
-		p.Asks.Each(func(key, val string) {
-			b := getBookValues(key, val)
+		p.Asks.Each(func(key, val float64) {
+			b := Converter(key, val)
 
 			if ask.Size.LessThan(b.Size) {
 				ask.Price = b.Price
@@ -163,23 +165,15 @@ func (p *Orderbook) Wall() (ask, bid Book) {
 				return false
 			}
 
-			a, err := decimal.NewFromString(prices[i].(string))
-			if err != nil {
-				p.Bids.tree.Remove(prices[i])
-				return false
-			}
-			b, err := decimal.NewFromString(prices[j].(string))
-			if err != nil {
-				p.Bids.tree.Remove(prices[j])
-				return false
-			}
+			a := decimal.NewFromFloat(prices[i].(float64))
+			b := decimal.NewFromFloat(prices[j].(float64))
 
 			return a.GreaterThan(b)
 		})
 
 		for i := 0; i < len(prices); i++ {
 			if v, isThere := p.Bids.tree.Get(prices[i]); isThere {
-				b := getBookValues(prices[i], v)
+				b := Converter(prices[i], v)
 
 				if bid.Size.LessThan(b.Size) {
 					bid.Price = b.Price
@@ -192,20 +186,4 @@ func (p *Orderbook) Wall() (ask, bid Book) {
 	wg.Wait()
 
 	return
-}
-
-func getBookValues(key any, val any) Book {
-	s := key.(string)
-	price, err := decimal.NewFromString(s)
-	if err != nil {
-		price = decimal.Zero
-	}
-	size, err := decimal.NewFromString(val.(string))
-	if err != nil {
-		size = decimal.Zero
-	}
-	return Book{
-		Price: price,
-		Size:  size,
-	}
 }

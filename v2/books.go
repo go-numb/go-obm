@@ -2,6 +2,7 @@ package obm
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/emirpasic/gods/maps/treemap"
@@ -9,6 +10,7 @@ import (
 )
 
 type Books struct {
+	isBid   bool
 	cap     int
 	remover Remover
 	tree    *treemap.Map
@@ -16,7 +18,7 @@ type Books struct {
 }
 
 func (p *Books) Len() int {
-	return len(p.Books)
+	return p.tree.Size()
 }
 
 func (p *Books) Less(i, j int) bool {
@@ -58,64 +60,62 @@ func (p *Books) Get(depth int) *Books {
 		depth = l
 	}
 
-	b := make([]Book, depth)
-
 	// sorted
 	keys := p.tree.Keys()
-
-	for i := 0; i < depth; i++ {
-		b[i] = p.getBookValues(keys[i])
-
+	// Convert keys to decimal and sort
+	decimalKeys := make([]decimal.Decimal, len(keys))
+	for i, key := range keys {
+		decimalKeys[i] = decimal.NewFromFloat(key.(float64))
 	}
 
+	sort.Slice(decimalKeys, func(i, j int) bool {
+		if p.isBid {
+			return decimalKeys[j].LessThan(decimalKeys[i])
+		}
+
+		return decimalKeys[i].LessThan(decimalKeys[j])
+	})
+
+	b := make([]Book, depth)
+	for i := 0; i < depth; i++ {
+		keyStr := decimalKeys[i].InexactFloat64()
+		b[i] = p.getBookValues(keyStr)
+	}
+
+	// sort
 	p.Books = b
+
 	return p
 }
 
 func (p *Books) Put(book Book) {
 	// put on when key is there
-	if _, isThere := p.tree.Get(book.Price.String()); isThere {
-		p.tree.Put(book.Price.String(), book.Size.String())
+	if _, isThere := p.tree.Get(book.Price.InexactFloat64()); isThere {
+		p.tree.Put(book.Price.InexactFloat64(), book.Size.InexactFloat64())
 		return
 	}
 
 	// インプット情報はすべて入力保存
-	//
+	p.tree.Put(book.Price.InexactFloat64(), book.Size.InexactFloat64())
 
 	// If map size is the upper limit, delete data from the upper or lower limits.
 	if p.tree.Size() >= p.cap {
 		switch p.remover {
-		case MAX:
-			found, _ := p.tree.Max()
-			price, err := decimal.NewFromString(found.(string))
-			if err != nil {
-				price = decimal.NewFromInt(0)
-			}
-			if book.Price.GreaterThan(price) {
-				return
-			}
-			p.tree.Remove(found)
+		case MAX: // asks
+			maxPrice, _ := p.tree.Max()
+			p.tree.Remove(maxPrice)
 
-		case MIN:
-			found, _ := p.tree.Min()
-			price, err := decimal.NewFromString(found.(string))
-			if err != nil {
-				price = decimal.NewFromInt(0)
-			}
-			if book.Price.LessThan(price) {
-				return
-			}
-			p.tree.Remove(found)
+		case MIN: // bids
+			minPrice, _ := p.tree.Min()
+			p.tree.Remove(minPrice)
 
 		}
 	}
-
-	p.tree.Put(book.Price.String(), book.Size.String())
 }
 
-func (p *Books) Each(fn func(key, val string)) {
+func (p *Books) Each(fn func(key, val float64)) {
 	p.tree.Each(func(key, val any) {
-		fn(key.(string), val.(string))
+		fn(key.(float64), val.(float64))
 	})
 }
 
@@ -132,20 +132,12 @@ func (p *Books) _all() []Book {
 }
 
 func (p *Books) getBookValues(key any) Book {
-	s := key.(string)
-	price, err := decimal.NewFromString(s)
-	if err != nil {
-		price = decimal.Zero
+	val, isFound := p.tree.Get(key)
+	if !isFound {
+		return Book{}
 	}
-	val, _ := p.tree.Get(s)
-	size, err := decimal.NewFromString(val.(string))
-	if err != nil {
-		size = decimal.Zero
-	}
-	return Book{
-		Price: price,
-		Size:  size,
-	}
+
+	return Converter(key, val)
 }
 
 // Converter is a function that converts the price and size of the book.
