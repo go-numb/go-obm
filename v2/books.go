@@ -18,7 +18,7 @@ type Books struct {
 }
 
 func (p *Books) Len() int {
-	return p.tree.Size()
+	return len(p.Books)
 }
 
 func (p *Books) Less(i, j int) bool {
@@ -49,7 +49,8 @@ func (p *Books) Size() int {
 	return p.tree.Size()
 }
 
-// Get depth default:10
+// Get depth default:10 with sort
+// bids: reverse, asks: sort
 func (p *Books) Get(depth int) *Books {
 	l := p.tree.Size()
 
