@@ -128,9 +128,11 @@ func (p *Orderbook) Best() (ask, bid Book) {
 
 // Wall search Big board In the setting cap range
 // Search by Price near Mid
-func (p *Orderbook) Wall() (ask, bid Book) {
+func (p *Orderbook) Wall(targetSize float64) (ask, bid Book) {
 	p.Lock()
 	defer p.Unlock()
+
+	size := decimal.NewFromFloat(targetSize)
 
 	wg := sync.WaitGroup{}
 
@@ -142,6 +144,9 @@ func (p *Orderbook) Wall() (ask, bid Book) {
 		p.Asks.Each(func(key, val float64) {
 			b := Converter(key, val)
 
+			if ask.Size.GreaterThan(size) {
+				return
+			}
 			if ask.Size.LessThan(b.Size) {
 				ask.Price = b.Price
 				ask.Size = b.Size
@@ -178,6 +183,10 @@ func (p *Orderbook) Wall() (ask, bid Book) {
 				if bid.Size.LessThan(b.Size) {
 					bid.Price = b.Price
 					bid.Size = b.Size
+				}
+
+				if bid.Size.GreaterThan(size) {
+					break
 				}
 			}
 		}
