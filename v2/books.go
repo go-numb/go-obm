@@ -114,6 +114,10 @@ func (p *Books) Put(book Book) {
 	}
 }
 
+func (p *Books) Remove(key any) {
+	p.tree.Remove(key)
+}
+
 func (p *Books) Each(fn func(key, val float64)) {
 	p.tree.Each(func(key, val any) {
 		fn(key.(float64), val.(float64))
