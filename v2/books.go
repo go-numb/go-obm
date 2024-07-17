@@ -90,12 +90,6 @@ func (p *Books) Get(depth int) *Books {
 }
 
 func (p *Books) Put(book Book) {
-	// put on when key is there
-	if _, isThere := p.tree.Get(book.Price.InexactFloat64()); isThere {
-		p.tree.Put(book.Price.InexactFloat64(), book.Size.InexactFloat64())
-		return
-	}
-
 	// インプット情報はすべて入力保存
 	p.tree.Put(book.Price.InexactFloat64(), book.Size.InexactFloat64())
 
