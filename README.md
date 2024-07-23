@@ -1,6 +1,8 @@
 # Orderbook manager with Golang
 go-obm is orderbook manager for float64. set, update, sort, get best price and more.  
-go-obm/v2 supported decimal, key is string strict price.
+go-obm/v2 supported decimal, key is string strict price.  
+
+go-obm/v2s supported string keys and custom sort, like a v2.
 
 ## Installation
 
